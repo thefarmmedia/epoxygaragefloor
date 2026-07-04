@@ -1,0 +1,13 @@
+{
+  "name": "epoxy-growth-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-client growth dashboard for coating contractors — CompanyCam, BrightLocal, Facebook, Google Business Profile, GoHighLevel, and Claude, in one panel per client.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

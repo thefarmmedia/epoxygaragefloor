@@ -1,6 +1,10 @@
-# Epoxy Ops Panel — BrightLocal, CompanyCam, Facebook, and Google Business Profile
+# Growth Dashboard — EpoxyGarageFloors.ai
 
-A small self-hosted dashboard panel that pulls live data from BrightLocal (local keyword rankings), CompanyCam (job photo documentation), Facebook (ad spend, leads, and scheduled posts), and Google Business Profile (views, calls, direction requests) and displays them in a dark wall-panel layout. No dependencies to install — just Node.js 18 or newer.
+A multi-client growth dashboard for coating contractors. Eleven panels pull
+live data from CompanyCam, BrightLocal, Facebook, Google Business Profile,
+GoHighLevel, and (for AI captions) Anthropic — each with a demo-data fallback
+so every panel renders before you've connected a single account. Zero runtime
+dependencies — just Node.js 18+.
 
 ## Quick start
 
@@ -8,41 +12,121 @@ A small self-hosted dashboard panel that pulls live data from BrightLocal (local
 node server.js
 ```
 
-Open http://localhost:3000. With no keys configured it runs in demo mode so you can see the layout with sample data. The status pills at the top right show which services are live vs demo.
+Open http://localhost:3000 — with one client configured (the default) this
+redirects straight to its dashboard. With no keys configured, everything runs
+in demo mode. The status pills at the top show which panels are live vs demo.
 
-## Connecting your accounts
+## Project structure
 
-Copy `.env.example` to `.env` and fill in the two keys:
+```
+server.js              the HTTP server, multi-client routing, caching, scheduler
+lib/                    one file per integration — API client + getSummary() + getMockSummary()
+public/                 dashboard.html (template), dashboard.css, dashboard.js, logo assets
+clients.json            the client registry: slug, name, logo, NAP
+clients/<slug>.env      per-client API keys (gitignored — copy clients/_example.env.example)
+data/<slug>/            per-client runtime state: jobs.json, review-requests.json, sent-report log
+.env                    agency-wide settings shared by every client (gitignored)
+scripts/                Windows auto-start installer
+```
 
-**CompanyCam** — log into the CompanyCam web app, go to Company Settings, then Integrations, then Access Tokens, and create a token. You need the Admin role. Paste it as `COMPANYCAM_TOKEN`.
+Each `lib/*.js` module is self-contained: shape live data in `getSummary()`,
+keep `getMockSummary()` in sync, and render it in `public/dashboard.js`. That's
+the whole extension pattern — adding a metric touches those two places.
 
-**BrightLocal** — log into BrightLocal, open Account Settings, then API Access, and copy your API key. Paste it as `BRIGHTLOCAL_API_KEY`. New keys start as trial keys with 250 free requests; the panel caches responses for 5 minutes so a wall tablet running all day uses roughly 150–200 requests per day. If you track multiple rank campaigns, set `BRIGHTLOCAL_CAMPAIGN_ID` to pin the panel to one; otherwise it uses the first campaign on your account.
+## Multi-client setup
 
-**Facebook** — go to developers.facebook.com and create an app (Business type), then use the Graph API Explorer to generate a token with the ads_read and pages_read_engagement permissions, and exchange it for a long-lived token (about 60 days; the token debugger shows expiry). Set `FB_ACCESS_TOKEN`, plus `FB_AD_ACCOUNT_ID` (the number in your Ads Manager URL, without the act_ prefix) and `FB_PAGE_ID` if you want scheduled posts shown.
+Every client gets their own entry in `clients.json` and their own URL at
+`/c/<slug>`:
 
-**Google Business Profile** — this one has the most setup because Google gates the Business Profile APIs behind an access request. In Google Cloud Console: create a project, request Business Profile API access (Google's form, usually approved in a few days for legitimate businesses), enable the Business Profile Performance API, create OAuth credentials, run the consent flow once with the business.manage scope, and save the refresh token. Fill in the four GBP_* variables. The panel then pulls views, calls, and direction requests, and `lib/googlebusiness.js` includes a `createPost` function ready for auto-posting finished-floor photos.
+```json
+{
+  "clients": [
+    { "slug": "acme-coatings", "name": "Acme Coatings", "logo": "/assets/logos/acme-coatings.png",
+      "nap": { "name": "Acme Coatings LLC", "address": "...", "phone": "...", "website": "..." } }
+  ]
+}
+```
 
-Restart the server after editing `.env`. Every service falls back to demo data independently, so you can connect them one at a time in whatever order is easiest — CompanyCam and BrightLocal are quick wins, Facebook is a lunch break, Google is a form and a few days of waiting.
+To add a client:
+1. Add an entry to `clients.json` (pick a URL-safe `slug`).
+2. Drop their logo in `public/assets/logos/<slug>.png` and point `logo` at it.
+3. Copy `clients/_example.env.example` to `clients/<slug>.env` and fill in
+   their CompanyCam/BrightLocal/Facebook/Google/GoHighLevel keys.
+4. Restart the server. Their dashboard is now live at `/c/<slug>`.
 
-## What each panel shows
+With more than one client configured, `/` shows a picker page linking to each
+dashboard instead of redirecting.
 
-**BrightLocal panel**: your tracked keywords with current Google rank and movement since the last check, plus summary tiles for best rank, number of top-3 positions, and keywords that moved up. Review summary data (average rating, reviews awaiting reply) is included in demo mode as a placeholder — BrightLocal's review data comes from their Reputation Manager reports, and wiring that in depends on which BrightLocal plan and report setup you have, so that hook is left in `lib/brightlocal.js` ready to extend.
+Agency-wide settings that aren't client-specific (Anthropic key for AI
+captions, Resend key for email reports) live once in the root `.env`, not per
+client — copy `.env.example` to `.env` to set those up.
 
-**CompanyCam panel**: photos uploaded today across the company, your most recent projects with per-job photo counts, and a red alert banner for any job with no activity in 3+ days — the "crew forgot to document" catcher.
+## What each panel needs, and what's wired vs. demo
+
+**Fully wired — goes live the moment you add keys:**
+- **Install schedule & material ordering** — jobs from a GoHighLevel calendar
+  (`GHL_API_KEY/GHL_LOCATION_ID/GHL_CALENDAR_ID`) or a `data/<slug>/jobs.json`
+  file, converted into base coat / flake / topcoat order quantities.
+- **Pipeline — money in motion** — dollars won this month, open estimate
+  value, and the biggest deals sitting in the pipeline, pulled from GoHighLevel
+  via a Private Integration token (Settings → Private Integrations in your GHL
+  agency; scope `opportunities.readonly`).
+- **Reviews — velocity** — new Google reviews this month against requests
+  sent, with a conversion rate. New reviews come from your Google Business
+  Profile (reuses the GBP_* OAuth vars, plus `GBP_ACCOUNT_ID`); requests sent
+  is logged locally with the "+1 request sent" button (no platform exposes
+  that number via API).
+- **Auto-poster** — drafts a caption for each of the latest CompanyCam
+  photos. Add `ANTHROPIC_API_KEY` and captions are genuinely written per job
+  by Claude instead of templated. One-click publishing to Google/Facebook is
+  the natural next build once GBP access is approved — `createPost()` in
+  `lib/googlebusiness.js` is ready for it.
+- **Website, local rankings, citations, job photos, Facebook ads, Google
+  profile** — same as before: BrightLocal, CompanyCam, Facebook, and Google
+  Business Profile/GA4 keys light these up. See each file in `lib/` for the
+  exact setup steps (they're in the header comment of each module).
+- **Email monthly report** — the header button fires a branded HTML summary
+  (jobs won, pipeline, reviews, calls, rankings) via Resend
+  (`RESEND_API_KEY` in the root `.env`, plus `REPORT_TO_EMAIL` per client). It
+  also auto-sends once a day-of-month check finds it's the 1st and no report
+  has gone out yet this month — no cron needed, the server checks hourly.
+
+**Demo-only by design:**
+- **Geo-grid** — the 7×7 colored dot spread across town with average rank and
+  top-3 count. BrightLocal's Local Search Grid product doesn't expose a public
+  read API yet, so this sells the concept now; when BrightLocal ships an API
+  for it (or you export a grid manually), wire it in `lib/geogrid.js` —
+  `getSummary()` is the documented hook.
+
+Restart the server after editing any `.env` file. Every integration falls
+back to demo data independently, so connect them in whatever order is
+easiest.
 
 ## Running it on a wall tablet
 
-Run the server on any always-on machine (an old laptop, a Raspberry Pi, or the shop PC) and point the tablet's browser at `http://<that-machine's-ip>:3000`. The page refreshes itself every 5 minutes. If you use Home Assistant like your existing wall panel, you can embed this as a webpage card or iframe.
+Run the server on any always-on machine (an old laptop, a Raspberry Pi, or
+the shop PC) and point the tablet's browser at
+`http://<that machine's IP>:<port>/c/<slug>`. The page refreshes itself every
+5 minutes.
 
-## Files
+## Auto-start on Windows
 
-- `server.js` — the web server and API proxy. Your keys stay on the server; the browser never sees them.
-- `lib/companycam.js` — CompanyCam API client (Bearer token, api.companycam.com/v2)
-- `lib/brightlocal.js` — BrightLocal API client (API key, tools.brightlocal.com)
-- `lib/facebook.js` — Meta Graph API client (ad insights + page scheduled posts)
-- `lib/googlebusiness.js` — Google Business Profile client (OAuth refresh flow, performance metrics, post creation)
-- `public/index.html` — the dashboard page
+So you never have to run `node server.js` by hand:
+
+```
+powershell -ExecutionPolicy Bypass -File scripts\install-windows-autostart.ps1
+```
+
+This registers a scheduled task that starts the dashboard, hidden in the
+background, whenever you log in — and starts it immediately so you don't need
+to log out and back in. To remove it: run
+`scripts\uninstall-windows-autostart.ps1`.
 
 ## Extending
 
-Both client modules return one summary object each, so adding a metric means touching two places: shape it in the `getSummary` function of the module, then render it in `index.html`. Good next candidates: CompanyCam webhooks for instant photo alerts instead of polling, BrightLocal Reputation Manager reports for live review data, and the auto-posting pipeline — a small cron job that takes the day's final CompanyCam photos and calls `createPost` in `lib/googlebusiness.js` so finished floors publish themselves to your Google profile.
+Adding a panel means: shape the data in a new `lib/<thing>.js` module (with
+`getSummary()` + `getMockSummary()`), register it in the `PANELS` map in
+`server.js`, add a `<section class="panel">` to `public/dashboard.html`, and a
+`load<Thing>()` function in `public/dashboard.js`. Good next candidates:
+one-click publishing from the auto-poster straight to Google/Facebook, and
+CompanyCam webhooks for instant photo alerts instead of polling.

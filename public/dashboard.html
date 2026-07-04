@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{CLIENT_NAME}} — Growth Dashboard</title>
+<link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    {{CLIENT_LOGO_IMG}}
+    <div>
+      <h1 style="line-height:1.1">Growth Dashboard</h1>
+      <div style="font-size:11px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px">{{CLIENT_TAGLINE}}</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn" id="email-report-btn">Email monthly report</button>
+    <div class="status-pills">
+      <span class="pill" id="pill-sched">Schedule</span>
+      <span class="pill" id="pill-pipeline">Pipeline</span>
+      <span class="pill" id="pill-reviews">Reviews</span>
+      <span class="pill" id="pill-autoposter">Auto-poster</span>
+      <span class="pill" id="pill-geogrid">Geo-grid</span>
+      <span class="pill" id="pill-web">Website</span>
+      <span class="pill" id="pill-bl">Rankings</span>
+      <span class="pill" id="pill-cc">CompanyCam</span>
+      <span class="pill" id="pill-fb">Facebook</span>
+      <span class="pill" id="pill-gbp">Google</span>
+      <span class="pill" id="pill-ct">Citations</span>
+    </div>
+  </div>
+</header>
+
+<div class="grid">
+
+  <section class="panel" id="schedule-panel" style="grid-column: 1 / -1">
+    <h2><span class="dot" style="background: var(--green)"></span>Upcoming installs — what to order</h2>
+    <div id="sched-weeks" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px" id="sched-rates"></div>
+  </section>
+
+  <section class="panel" id="pipeline-panel">
+    <h2><span class="dot" style="background: var(--green)"></span>Pipeline — money in motion</h2>
+    <div class="stats" id="pipeline-stats"></div>
+    <div class="section-label" style="margin-top:0">Biggest deals in the pipeline</div>
+    <div id="pipeline-deals"></div>
+  </section>
+
+  <section class="panel" id="reviews-panel">
+    <h2><span class="dot" style="background: var(--amber)"></span>Reviews — velocity</h2>
+    <div class="stats" id="reviews-stats"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:-4px;margin-bottom:8px">
+      <button class="btn small" id="log-request-btn">+1 request sent</button>
+    </div>
+    <div id="reviews-latest"></div>
+  </section>
+
+  <section class="panel" id="autoposter-panel">
+    <h2><span class="dot" style="background: #818cf8"></span>Auto-poster — draft captions</h2>
+    <div style="font-size:12px;color:var(--muted)" id="autoposter-mode"></div>
+    <div id="autoposter-drafts"></div>
+  </section>
+
+  <section class="panel" id="geogrid-panel">
+    <h2><span class="dot" style="background: var(--blue)"></span>Geo-grid — rank across town</h2>
+    <div class="geogrid-wrap">
+      <div class="geogrid" id="geogrid-cells"></div>
+      <div>
+        <div class="stats" id="geogrid-stats" style="grid-template-columns:1fr;margin-bottom:10px"></div>
+        <div class="geogrid-legend">
+          <div><span class="sw" style="background:var(--green)"></span>Top 3</div>
+          <div><span class="sw" style="background:var(--amber)"></span>4–10</div>
+          <div><span class="sw" style="background:var(--red)"></span>11+</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-label" id="geogrid-note"></div>
+  </section>
+
+  <section class="panel" id="website-panel">
+    <h2><span class="dot" style="background: #38bdf8"></span>Website — last 7 days</h2>
+    <div class="stats" id="web-stats"></div>
+    <div class="section-label" style="margin-top:0">Where visitors came from</div>
+    <div id="web-channels"></div>
+  </section>
+
+  <section class="panel" id="brightlocal-panel">
+    <h2><span class="dot" style="background: var(--blue)"></span>BrightLocal — local rankings</h2>
+    <div class="stats" id="bl-stats"></div>
+    <div id="bl-keywords"></div>
+    <div id="bl-reviews"></div>
+  </section>
+
+  <section class="panel" id="companycam-panel">
+    <h2><span class="dot" style="background: var(--green)"></span>CompanyCam — job documentation</h2>
+    <div class="alert-banner" id="cc-alert"></div>
+    <div class="stats" id="cc-stats"></div>
+    <div class="section-label">Latest photos from the field</div>
+    <div class="photo-grid" id="cc-photos"></div>
+    <div class="section-label">Jobs</div>
+    <div id="cc-projects"></div>
+  </section>
+
+  <section class="panel" id="facebook-panel">
+    <h2><span class="dot" style="background: #818cf8"></span>Facebook — ads and scheduled posts</h2>
+    <div class="stats" id="fb-stats"></div>
+    <div id="fb-campaigns"></div>
+    <div id="fb-scheduled"></div>
+  </section>
+
+  <section class="panel" id="gbp-panel">
+    <h2><span class="dot" style="background: var(--amber)"></span>Google Business Profile — last 7 days</h2>
+    <div class="stats" id="gbp-stats"></div>
+    <div id="gbp-extra"></div>
+  </section>
+
+  <section class="panel" id="citations-panel" style="grid-column: 1 / -1">
+    <h2><span class="dot" style="background: #f472b6"></span>Citations — NAP consistency and coverage</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px" id="ct-cols">
+      <div>
+        <div class="section-label" style="margin-top:0">Master NAP record</div>
+        <div id="ct-nap" style="background:#10151d;border:1px solid var(--tile-edge);border-radius:10px;padding:12px;font-size:13px;line-height:1.7;margin-top:8px"></div>
+        <div class="stats" id="ct-stats" style="margin-top:12px;margin-bottom:0"></div>
+        <div id="ct-campaign"></div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-top:0">Top live citations</div>
+        <div id="ct-active"></div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-top:0">Next opportunities</div>
+        <div id="ct-opps"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>Powered by <strong style="color:var(--text)">{{CLIENT_NAME}}</strong> · auto-refreshes every 5 minutes · <span id="last-updated"></span></footer>
+
+<script>window.CLIENT_SLUG = {{CLIENT_SLUG_JSON}};</script>
+<script src="/dashboard.js"></script>
+</body>
+</html>

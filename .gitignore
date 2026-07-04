@@ -1,0 +1,7 @@
+node_modules/
+.env
+clients/*.env
+!clients/_example.env.example
+data/**
+!data/**/
+!data/**/.gitkeep

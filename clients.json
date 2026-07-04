@@ -1,0 +1,16 @@
+{
+  "clients": [
+    {
+      "slug": "epoxygaragefloors",
+      "name": "EpoxyGarageFloors.ai",
+      "tagline": "The AI-powered growth system for coating contractors",
+      "logo": "/assets/logos/epoxygaragefloors.png",
+      "nap": {
+        "name": "EpoxyGarageFloors.ai",
+        "address": "",
+        "phone": "",
+        "website": "epoxygaragefloors.ai"
+      }
+    }
+  ]
+}
