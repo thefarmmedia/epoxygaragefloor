@@ -298,6 +298,43 @@ async function loadAutoposter() {
   });
 }
 
+async function loadOrganicPerformance() {
+  const data = await (await fetch(`${API}/organic/summary`)).json();
+  const w = data.winner;
+  document.getElementById("organic-winner").innerHTML = !w ? '<div class="row"><span class="label" style="color:var(--muted)">No organic posts found in the last 30 days</span></div>' : `
+    <div class="draft-card">
+      ${w.photo ? `<img src="${esc(w.photo)}" alt="">` : ""}
+      <div class="body">
+        <div class="cap-text">${esc(w.message)}</div>
+        <div class="cap-meta">
+          <span>${w.likes} likes · ${w.comments} comments · ${w.shares} shares</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Turning this into a paid ad isn't wired up yet — that means real ad spend, so it needs budget and stop-rule parameters set first.</div>`;
+}
+
+async function publishNow() {
+  const btn = document.getElementById("publish-now-btn");
+  const resultEl = document.getElementById("publish-result");
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = "Publishing…";
+  try {
+    const data = await (await fetch(`${API}/autopost/publish`, { method: "POST" })).json();
+    const fb = data.results?.facebook;
+    const g = data.results?.googleBusinessProfile;
+    resultEl.innerHTML = `
+      <div>Facebook: ${fb?.ok ? '<span class="up">posted</span>' : `<span class="down">${esc(fb?.error || "failed")}</span>`}</div>
+      <div>Google Business Profile: ${g?.ok ? '<span class="up">posted</span>' : `<span class="down">${esc(g?.error || "failed")}</span>`}</div>`;
+  } catch (e) {
+    resultEl.innerHTML = `<span class="down">${esc(e.message)}</span>`;
+  }
+  btn.textContent = orig;
+  btn.disabled = false;
+}
+document.getElementById("publish-now-btn").addEventListener("click", publishNow);
+
 function rankColor(rank) {
   if (rank <= 3) return "var(--green)";
   if (rank <= 10) return "var(--amber)";
@@ -348,7 +385,7 @@ document.getElementById("log-request-btn").addEventListener("click", logRequestS
 async function refresh() {
   try {
     await Promise.all([
-      loadSchedule(), loadPipeline(), loadReviewsVelocity(), loadAutoposter(), loadGeogrid(),
+      loadSchedule(), loadPipeline(), loadReviewsVelocity(), loadAutoposter(), loadOrganicPerformance(), loadGeogrid(),
       loadWebsite(), loadBrightLocal(), loadCompanyCam(), loadFacebook(), loadGbp(), loadCitations(),
     ]);
   } catch (e) { console.error(e); }

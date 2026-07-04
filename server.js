@@ -21,6 +21,7 @@ const ghl = require("./lib/ghl");
 const reviews = require("./lib/reviews");
 const geogrid = require("./lib/geogrid");
 const autoposter = require("./lib/autoposter");
+const autopublish = require("./lib/autopublish");
 const email = require("./lib/email");
 
 const ROOT = __dirname;
@@ -163,6 +164,11 @@ async function autoposterDrafts(slug, env) {
   return cached(`${slug}:autoposter:${cc.source}`, () => autoposter.getDrafts(cc, env));
 }
 
+async function organicPerformanceSummary(slug, env) {
+  return safe(`${slug}:organic`, !!(env.FB_ACCESS_TOKEN && env.FB_PAGE_ID),
+    () => autopublish.organicPerformance(env), () => autopublish.getMockOrganicPerformance());
+}
+
 const PANELS = {
   companycam: companycamSummary,
   brightlocal: brightlocalSummary,
@@ -174,6 +180,7 @@ const PANELS = {
   pipeline: pipelineSummary,
   reviews: reviewsSummary,
   geogrid: geogridSummary,
+  organic: organicPerformanceSummary,
 };
 
 async function statusFor(slug, env) {
@@ -188,6 +195,7 @@ async function statusFor(slug, env) {
     reviews: gbpReady(env) && env.GBP_ACCOUNT_ID ? "configured" : "mock",
     geogrid: "demo",
     autoposter: env.ANTHROPIC_API_KEY ? "ai" : "template",
+    organic: env.FB_ACCESS_TOKEN && env.FB_PAGE_ID ? "configured" : "mock",
   };
 }
 
@@ -333,6 +341,17 @@ const server = http.createServer(async (req, res) => {
           try {
             await sendReportForClient(client, env);
             return json(res, { ok: true });
+          } catch (err) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ ok: false, error: err.message }));
+          }
+        }
+        if (panel === "autopost" && action === "publish" && req.method === "POST") {
+          try {
+            const cc = await companycamSummary(slug, env);
+            const origin = `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`;
+            const result = await autopublish.publishLatestJobPhoto(env, cc, origin);
+            return json(res, { ok: true, ...result });
           } catch (err) {
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ ok: false, error: err.message }));
