@@ -61,6 +61,37 @@ Agency-wide settings that aren't client-specific (Anthropic key for AI
 captions, Resend key for email reports) live once in the root `.env`, not per
 client — copy `.env.example` to `.env` to set those up.
 
+## Deploying (Render)
+
+This is a stateful Node server (in-memory cache, a scheduler for the monthly
+email, local per-client data files) — it needs somewhere that runs a
+persistent process, not a static-site host. [Render](https://render.com) works
+well and needs no code changes:
+
+1. **New → Web Service** on Render, point it at this GitHub repo. It picks up
+   `render.yaml` automatically: no build command, start command
+   `node server.js`. Render sets `PORT` itself, which `server.js` already reads.
+2. **Agency-wide keys** (`ANTHROPIC_API_KEY`, `RESEND_API_KEY`): set them under
+   the service's **Environment** tab as regular environment variables.
+3. **Per-client keys**: use Render's **Environment → Secret Files**. Add a
+   secret file at path `clients/<slug>.env` and paste in the same
+   `key=value` content you'd put in that file locally (see
+   `clients/_example.env.example`). Render writes it to that exact path in
+   the container before your app starts, so `server.js` reads it exactly like
+   it would locally — no code changes needed.
+4. **Persistent data** (`data/<slug>/jobs.json`, review-request counts, the
+   monthly-report-sent tracker): Render's default disk is ephemeral and
+   resets on redeploy. For a single low-traffic dashboard this is usually
+   fine (worst case: a review-request counter resets, or the monthly email
+   fires again); if that matters to you, attach a Render **persistent disk**
+   mounted at `data/`.
+
+Railway and Fly.io both work too — same idea (persistent Node process, env
+vars for agency-wide keys), but neither has an exact equivalent of Render's
+Secret Files, so you'd set each client's variables as individual environment
+variables instead of one file, or write them into the container at build
+time.
+
 ## What each panel needs, and what's wired vs. demo
 
 **Fully wired — goes live the moment you add keys:**
