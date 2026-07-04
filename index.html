@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Epoxy Ops Panel — Marketing</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --tile: #161c26;
+    --tile-edge: #232c3b;
+    --text: #e8ecf2;
+    --muted: #8b96a8;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px;
+  }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+  .status-pills { display: flex; gap: 8px; font-size: 12px; }
+  .pill {
+    padding: 4px 12px; border-radius: 999px; border: 1px solid var(--tile-edge);
+    background: var(--tile); color: var(--muted);
+  }
+  .pill.live { color: var(--green); border-color: #1f4d33; }
+  .pill.mock { color: var(--amber); border-color: #4d3d1f; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--tile);
+    border: 1px solid var(--tile-edge);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .panel h2 {
+    font-size: 15px; font-weight: 600; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px; color: var(--text);
+  }
+  .panel h2 .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--tile-edge); font-size: 14px;
+    gap: 12px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .sub { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .rank { font-weight: 700; font-size: 15px; min-width: 34px; text-align: right; }
+  .delta { font-size: 12px; min-width: 36px; text-align: right; }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .flat { color: var(--muted); }
+
+  .badge {
+    font-size: 12px; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge.ok { background: #12301f; color: var(--green); }
+  .badge.warn { background: #33270f; color: var(--amber); }
+  .badge.alert { background: #331414; color: var(--red); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;
+  }
+  .stat {
+    background: #10151d; border: 1px solid var(--tile-edge); border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .stat .n { font-size: 22px; font-weight: 700; }
+  .stat .l { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .alert-banner {
+    background: #2a1215; border: 1px solid #5c2626; color: #f5b5b5;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600;
+    margin-bottom: 14px; display: none;
+  }
+  .alert-banner.show { display: block; }
+
+  .review-card {
+    background: #10151d; border: 1px solid var(--tile-edge); border-radius: 10px;
+    padding: 10px 12px; margin-top: 10px; font-size: 13px;
+  }
+  .review-card .who { font-weight: 600; }
+  .review-card .stars { color: var(--amber); letter-spacing: 2px; }
+  .review-card .txt { color: var(--muted); margin-top: 4px; font-size: 12px; }
+
+  footer { margin-top: 16px; font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Marketing panel</h1>
+  <div class="status-pills">
+    <span class="pill" id="pill-bl">BrightLocal</span>
+    <span class="pill" id="pill-cc">CompanyCam</span>
+    <span class="pill" id="pill-fb">Facebook</span>
+    <span class="pill" id="pill-gbp">Google</span>
+  </div>
+</header>
+
+<div class="grid">
+
+  <section class="panel" id="brightlocal-panel">
+    <h2><span class="dot" style="background: var(--blue)"></span>BrightLocal — local rankings</h2>
+    <div class="stats" id="bl-stats"></div>
+    <div id="bl-keywords"></div>
+    <div id="bl-reviews"></div>
+  </section>
+
+  <section class="panel" id="companycam-panel">
+    <h2><span class="dot" style="background: var(--green)"></span>CompanyCam — job documentation</h2>
+    <div class="alert-banner" id="cc-alert"></div>
+    <div class="stats" id="cc-stats"></div>
+    <div id="cc-projects"></div>
+  </section>
+
+  <section class="panel" id="facebook-panel">
+    <h2><span class="dot" style="background: #818cf8"></span>Facebook — ads and scheduled posts</h2>
+    <div class="stats" id="fb-stats"></div>
+    <div id="fb-campaigns"></div>
+    <div id="fb-scheduled"></div>
+  </section>
+
+  <section class="panel" id="gbp-panel">
+    <h2><span class="dot" style="background: var(--amber)"></span>Google Business Profile — last 7 days</h2>
+    <div class="stats" id="gbp-stats"></div>
+    <div id="gbp-extra"></div>
+  </section>
+
+</div>
+
+<footer>Auto-refreshes every 5 minutes · <span id="last-updated"></span></footer>
+
+<script>
+const fmtAgo = (unix) => {
+  if (!unix) return "";
+  const s = Math.floor(Date.now() / 1000) - unix;
+  if (s < 3600) return Math.max(1, Math.floor(s / 60)) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return Math.floor(s / 86400) + "d ago";
+};
+const esc = (str) => String(str ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function loadBrightLocal() {
+  const data = await (await fetch("/api/brightlocal/summary")).json();
+  const pill = document.getElementById("pill-bl");
+  pill.textContent = "BrightLocal · " + (data.source === "live" ? "live" : "demo data");
+  pill.className = "pill " + (data.source === "live" ? "live" : "mock");
+
+  const kws = data.keywords || [];
+  const top3 = kws.filter(k => k.rank && k.rank <= 3).length;
+  const improved = kws.filter(k => k.change > 0).length;
+  const best = kws.length ? Math.min(...kws.map(k => k.rank ?? 999)) : "—";
+
+  document.getElementById("bl-stats").innerHTML = `
+    <div class="stat"><div class="n">${best}</div><div class="l">Best rank</div></div>
+    <div class="stat"><div class="n">${top3}</div><div class="l">Top 3 spots</div></div>
+    <div class="stat"><div class="n">${improved}</div><div class="l">Moved up</div></div>`;
+
+  document.getElementById("bl-keywords").innerHTML = kws.map(k => {
+    const cls = k.change > 0 ? "up" : k.change < 0 ? "down" : "flat";
+    const arrow = k.change > 0 ? "▲" + k.change : k.change < 0 ? "▼" + Math.abs(k.change) : "—";
+    return `<div class="row">
+      <span class="label">${esc(k.keyword)}</span>
+      <span style="display:flex;gap:10px;align-items:baseline">
+        <span class="rank">#${k.rank ?? "–"}</span>
+        <span class="delta ${cls}">${arrow}</span>
+      </span>
+    </div>`;
+  }).join("") || '<div class="row"><span class="label" style="color:var(--muted)">No rank campaigns found on this account</span></div>';
+
+  const r = data.reviews;
+  document.getElementById("bl-reviews").innerHTML = !r ? "" : `
+    <div class="row" style="margin-top:6px">
+      <span class="label">Reviews: <strong>${r.averageRating}★</strong> avg · ${r.totalReviews} total</span>
+      <span class="badge ${r.awaitingReply?.length ? "warn" : "ok"}">
+        ${r.awaitingReply?.length ? r.awaitingReply.length + " awaiting reply" : "All replied"}
+      </span>
+    </div>
+    ${(r.awaitingReply || []).map(rv => `
+      <div class="review-card">
+        <span class="who">${esc(rv.author)}</span> · <span class="stars">${"★".repeat(rv.rating)}</span>
+        · <span style="color:var(--muted)">${esc(rv.site)}, ${rv.daysOld}d old</span>
+        <div class="txt">${esc(rv.snippet)}</div>
+      </div>`).join("")}`;
+}
+
+async function loadCompanyCam() {
+  const data = await (await fetch("/api/companycam/summary")).json();
+  const pill = document.getElementById("pill-cc");
+  pill.textContent = "CompanyCam · " + (data.source === "live" ? "live" : "demo data");
+  pill.className = "pill " + (data.source === "live" ? "live" : "mock");
+
+  const missing = data.projectsMissingPhotos || [];
+  const alertEl = document.getElementById("cc-alert");
+  if (missing.length) {
+    alertEl.textContent = "⚠ No recent photos: " + missing.join(" · ");
+    alertEl.classList.add("show");
+  } else {
+    alertEl.classList.remove("show");
+  }
+
+  const projects = data.activeProjects || [];
+  const active = projects.filter(p => !p.stale).length;
+
+  document.getElementById("cc-stats").innerHTML = `
+    <div class="stat"><div class="n">${data.photosToday ?? 0}</div><div class="l">Photos today</div></div>
+    <div class="stat"><div class="n">${active}</div><div class="l">Active jobs</div></div>
+    <div class="stat"><div class="n">${missing.length}</div><div class="l">Need photos</div></div>`;
+
+  document.getElementById("cc-projects").innerHTML = projects.map(p => `
+    <div class="row">
+      <span class="label">${esc(p.name)}<span class="sub">${esc(p.address)} · last activity ${fmtAgo(p.lastActivity)}</span></span>
+      <span class="badge ${p.stale ? "alert" : p.photosToday > 0 ? "ok" : "warn"}">
+        ${p.stale ? "Stale" : p.photosToday > 0 ? p.photosToday + " photos today" : "No photos yet"}
+      </span>
+    </div>`).join("");
+}
+
+async function loadFacebook() {
+  const data = await (await fetch("/api/facebook/summary")).json();
+  const pill = document.getElementById("pill-fb");
+  pill.textContent = "Facebook · " + (data.source === "live" ? "live" : "demo data");
+  pill.className = "pill " + (data.source === "live" ? "live" : "mock");
+
+  const w = data.week || {};
+  document.getElementById("fb-stats").innerHTML = `
+    <div class="stat"><div class="n">$${(w.spend ?? 0).toFixed(2)}</div><div class="l">Spend 7d</div></div>
+    <div class="stat"><div class="n">${w.leads ?? 0}</div><div class="l">Leads 7d</div></div>
+    <div class="stat"><div class="n">${w.costPerLead != null ? "$" + w.costPerLead.toFixed(2) : "—"}</div><div class="l">Cost / lead</div></div>`;
+
+  document.getElementById("fb-campaigns").innerHTML = (data.campaignsToday || []).map(c => `
+    <div class="row">
+      <span class="label">${esc(c.campaign)}<span class="sub">today</span></span>
+      <span style="display:flex;gap:12px;align-items:baseline;font-size:13px">
+        <span>$${c.spend.toFixed(2)}</span>
+        <span class="badge ${c.leads > 0 ? "ok" : "warn"}">${c.leads} lead${c.leads === 1 ? "" : "s"}</span>
+      </span>
+    </div>`).join("") || '<div class="row"><span class="label" style="color:var(--muted)">No active campaigns today</span></div>';
+
+  const posts = data.scheduledPosts || [];
+  document.getElementById("fb-scheduled").innerHTML = !posts.length ? "" :
+    '<div class="row" style="margin-top:6px"><span class="label" style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Scheduled posts</span></div>' +
+    posts.map(p => `
+      <div class="row">
+        <span class="label">${esc(p.message)}</span>
+        <span class="badge ok">${new Date(p.publishAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}</span>
+      </div>`).join("");
+}
+
+async function loadGbp() {
+  const data = await (await fetch("/api/gbp/summary")).json();
+  const pill = document.getElementById("pill-gbp");
+  pill.textContent = "Google · " + (data.source === "live" ? "live" : "demo data");
+  pill.className = "pill " + (data.source === "live" ? "live" : "mock");
+
+  const d = data.last7Days || {};
+  document.getElementById("gbp-stats").innerHTML = `
+    <div class="stat"><div class="n">${d.views ?? 0}</div><div class="l">Profile views</div></div>
+    <div class="stat"><div class="n">${d.calls ?? 0}</div><div class="l">Calls</div></div>
+    <div class="stat"><div class="n">${d.directions ?? 0}</div><div class="l">Directions</div></div>`;
+
+  document.getElementById("gbp-extra").innerHTML = `
+    <div class="row">
+      <span class="label">Website clicks from profile</span>
+      <span class="rank">${d.websiteClicks ?? 0}</span>
+    </div>
+    ${data.nextQueuedPost ? `<div class="row">
+      <span class="label">Next queued post<span class="sub">${esc(data.nextQueuedPost)}</span></span>
+      <span class="badge warn">Queued</span>
+    </div>` : ""}`;
+}
+
+async function refresh() {
+  try { await Promise.all([loadBrightLocal(), loadCompanyCam(), loadFacebook(), loadGbp()]); } catch (e) { console.error(e); }
+  document.getElementById("last-updated").textContent =
+    "Updated " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+refresh();
+setInterval(refresh, 5 * 60 * 1000);
+</script>
+</body>
+</html>
