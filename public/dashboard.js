@@ -242,6 +242,7 @@ async function loadPipeline() {
   document.getElementById("pipeline-stats").innerHTML = `
     <div class="stat"><div class="n" style="color:var(--green)">${money(data.wonThisMonth)}</div><div class="l">Won this month</div></div>
     <div class="stat"><div class="n">${money(data.openValue)}</div><div class="l">Open estimate value</div></div>
+    <div class="stat"><div class="n">${data.openCount ?? 0}</div><div class="l">Leads / estimates</div></div>
     <div class="stat"><div class="n">${data.dealsWonCount ?? 0}</div><div class="l">Jobs won</div></div>`;
 
   document.getElementById("pipeline-deals").innerHTML = (data.biggestDeals || []).map(d => `
