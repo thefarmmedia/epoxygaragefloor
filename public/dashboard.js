@@ -189,7 +189,7 @@ async function loadSchedule() {
   setPill("pill-sched", "Schedule", data.source);
   const sysBadge = { flake: "ok", solid: "warn", metallic: "alert" };
   document.getElementById("sched-weeks").innerHTML = (data.weeks || []).map(w => `
-    <div style="background:#10151d;border:1px solid var(--tile-edge);border-radius:10px;padding:12px">
+    <div style="background:#131315;border:1px solid var(--tile-edge);border-radius:4px;padding:12px">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <strong style="font-size:14px">${esc(w.label)}</strong>
         <span style="font-size:12px;color:var(--muted)">${w.materials.jobs} job${w.materials.jobs === 1 ? "" : "s"} · ${w.materials.sqft.toLocaleString()} sq ft</span>
